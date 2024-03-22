@@ -30,8 +30,9 @@ def getResult(image_path):
     interpreter.set_tensor(input_details[0]['index'], x)
     interpreter.invoke()
     predictions = interpreter.get_tensor(output_details[0]['index'])[0]
-
-    return predictions
+    confidence_score = np.max(predictions)
+    print("Confidence score:", confidence_score)
+    return predictions,confidence_score
 
 @app.route('/', methods=['GET'])
 def index():
@@ -47,8 +48,10 @@ def api():
         file_path = os.path.join(basepath, 'uploads', secure_filename(image.filename))
         image.save(file_path)
 
-        predictions = getResult(file_path)
+        predictions, confidence_score = getResult(file_path)
         predicted_label = labels[np.argmax(predictions)]
+        if(confidence_score<0.9):
+            predicted_label="Cannot Detect Disease"
         return jsonify({'prediction': predicted_label})
     except Exception as e:
         return jsonify({'Error': str(e)})
@@ -62,8 +65,10 @@ def upload():
         file_path = os.path.join(basepath, 'uploads', secure_filename(f.filename))
         f.save(file_path)
 
-        predictions = getResult(file_path)
+        predictions, confidence_score = getResult(file_path)
         predicted_label = labels[np.argmax(predictions)]
+        if(confidence_score<0.9):
+            predicted_label="Cannot Detect Disease"
 
         return predicted_label
 
